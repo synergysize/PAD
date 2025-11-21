@@ -5,12 +5,16 @@ import { Wallet, Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface PlayerCardProps {
-  player: Player
+  player: Player | null
 }
 
 export function PlayerCard({ player }: PlayerCardProps) {
+  if (!player) return null
+
   const isEliminated = player.status === "eliminated"
   const isBlue = player.team === "blue"
+  const currentBet = (Number(player.teamBet) || 0) + (Number(player.soloBet) || 0)
+  const padsBalance = Number(player.padsBalance) || 0
 
   return (
     <Card
@@ -48,7 +52,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
             <div className="mt-1 flex items-center justify-between text-xs text-gray-400">
               <div className="flex items-center gap-1">
                 <Wallet className="h-3 w-3" />
-                <span className="font-mono text-white">{player.padsBalance.toLocaleString()} PADS</span>
+                <span className="font-mono text-white">{padsBalance.toLocaleString()} PADS</span>
                 <span className="text-[10px] text-gray-500">({player.solBalance} SOL)</span>
               </div>
             </div>
@@ -59,7 +63,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
           <span className="text-xs text-gray-500">CURRENT BET</span>
           <div className={cn("flex items-center gap-1 font-mono font-bold", isBlue ? "text-blue-400" : "text-red-400")}>
             <Coins className="h-3 w-3" />
-            {player.currentBet.toLocaleString()} PADS
+            {currentBet.toLocaleString()} PADS
           </div>
         </div>
       </CardContent>

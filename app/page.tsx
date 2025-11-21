@@ -8,23 +8,24 @@ import { ChartArea } from "@/components/chart-area"
 import { createClient } from "@/lib/supabase/client"
 import { AlertCircle, Loader2 } from "lucide-react"
 import { useGame, useLatestGame, useGamePlayers, useCreateGame } from "@/lib/supabase/hooks"
-import { runTestMode } from "@/lib/test-mode" // Import runTestMode
+import { runTestMode } from "@/lib/test-mode"
 
 export default function Page() {
   const supabase = createClient()
-  const [isConfigured, setIsConfigured] = useState(true)
-  const [testMode, setTestMode] = useState(false) // Add testMode state
-  const [timeLeft, setTimeLeft] = useState(0) // Add local timeLeft state
+  const [isConfigured, setIsConfigured] = useState(!!supabase)
+  const [testMode, setTestMode] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [lastTestAction, setLastTestAction] = useState(0)
+
   const { gameId, loading: latestGameLoading } = useLatestGame()
   const { game, loading: gameLoading } = useGame(gameId)
   const { players, loading: playersLoading } = useGamePlayers(gameId)
   const { createGame, loading: createGameLoading } = useCreateGame()
 
   useEffect(() => {
-    if (!supabase) {
-      setIsConfigured(false)
-    }
-  }, [supabase])
+    setIsMounted(true)
+  }, [])
 
   // Create a default game if none exists
   useEffect(() => {
@@ -47,49 +48,67 @@ export default function Page() {
     return () => clearInterval(interval)
   }, [game?.phaseEndsAt])
 
-  // Test Mode Logic: Auto-advance phases and run bots
   useEffect(() => {
-    if (!testMode || !game || !supabase) return
+    if (!testMode || !game || !supabase || !isMounted) return
+
+    const now = Date.now()
+    const shouldRunAction = now - lastTestAction > 3000 // Wait 3 seconds between actions
+
+    if (!shouldRunAction) return
 
     const handleTestMode = async () => {
-      // Run bot actions for current phase
-      await runTestMode(game.id, game.phase, supabase)
+      try {
+        console.log("[v0] Test mode running for phase:", game.phase)
 
-      // Auto-advance phase if time is up
-      if (timeLeft <= 0) {
-        const nextPhase = getNextPhase(game.phase)
-        const duration = 15 // 15 seconds for test mode
+        // Run bot actions for current phase (only once per phase)
+        await runTestMode(game.id, game.phase, supabase)
+        setLastTestAction(Date.now())
 
-        // Calculate new end time
-        const newEndsAt = new Date(Date.now() + duration * 1000).toISOString()
+        // Auto-advance phase if time is up
+        if (timeLeft <= 0) {
+          const nextPhase = getNextPhase(game.phase)
+          const duration = 15 // 15 seconds for test mode
 
-        // Update game state
-        await supabase
-          .from("games")
-          .update({
-            phase: nextPhase,
-            phase_ends_at: newEndsAt,
-            // Reveal condition in SOLO_BETTING
-            condition_revealed: nextPhase === "SOLO_BETTING" || nextPhase === "RACE" || nextPhase === "RESULTS",
-          })
-          .eq("id", game.id)
+          // Calculate new end time
+          const newEndsAt = new Date(Date.now() + duration * 1000).toISOString()
 
-        // If looping back to JOINING, maybe reset pot or create new game?
-        // For simplicity, we'll just loop phases in same game or let createGame handle new one if we set phase to 'FINISHED'
-        // But getNextPhase handles the cycle.
+          console.log("[v0] Advancing phase:", game.phase, "->", nextPhase)
+
+          // Update game state
+          await supabase
+            .from("games")
+            .update({
+              phase: nextPhase,
+              phase_ends_at: newEndsAt,
+              // Reveal condition in SOLO_BETTING
+              condition_revealed: nextPhase === "SOLO_BETTING" || nextPhase === "RACE" || nextPhase === "RESULTS",
+            })
+            .eq("id", game.id)
+        }
+      } catch (error) {
+        console.error("[v0] Test mode error:", error)
       }
     }
 
-    const interval = setInterval(handleTestMode, 1000)
-    return () => clearInterval(interval)
-  }, [testMode, game, timeLeft, supabase])
+    handleTestMode()
+  }, [testMode, game, timeLeft, supabase, isMounted, lastTestAction])
 
-  // Helper to get next phase
   const getNextPhase = (current: string) => {
     const phases = ["JOINING", "TEAM_BETTING", "PROMPTS", "SOLO_BETTING", "RACE", "RESULTS"]
     const idx = phases.indexOf(current)
     if (idx === -1 || idx === phases.length - 1) return "JOINING"
     return phases[idx + 1]
+  }
+
+  if (!isMounted) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#0a0a0a] text-white">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+          <p className="text-gray-400">Initializing neural interface...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!isConfigured) {
@@ -134,11 +153,11 @@ export default function Page() {
         <div className="transition-opacity hover:opacity-80">
           <TopBar
             phase={phase}
-            timeLeft={timeLeft} // Use calculated timeLeft
+            timeLeft={timeLeft}
             theme={game?.theme || "Loading..."}
             roundCondition={roundCondition}
-            testMode={testMode} // Pass testMode
-            onToggleTestMode={setTestMode} // Pass setter
+            testMode={testMode}
+            onToggleTestMode={setTestMode}
           />
         </div>
         <ChartArea gameId={game?.id} />

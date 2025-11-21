@@ -201,23 +201,3 @@ export const MOCK_PLAYERS: Player[] = [
     gameId: "game1",
   },
 ]
-
-export const CHART_DATA: CandlestickData[] = Array.from({ length: 50 }, (_, i) => {
-  const baseBlue = 1000 + Math.sin(i * 0.2) * 100 + i * 5
-  const baseRed = 1000 + Math.cos(i * 0.2) * 100 + i * 5
-  const volatility = 20
-
-  const generateCandle = (base: number): TeamCandleData => {
-    const open = base + (Math.random() - 0.5) * volatility
-    const close = base + (Math.random() - 0.5) * volatility
-    const high = Math.max(open, close) + Math.random() * volatility
-    const low = Math.min(open, close) - Math.random() * volatility
-    return { open, close, high, low }
-  }
-
-  return {
-    time: i,
-    blue: generateCandle(baseBlue),
-    red: generateCandle(baseRed),
-  }
-})

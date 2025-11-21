@@ -19,16 +19,22 @@ export const TEST_PROMPTS = [
   "Checking my portfolio every 5 seconds won't make it go up 📱",
 ]
 
-export function generateMockCandles(count = 10, startPrice = 1000, volatility = 0.02) {
+export function generateMockCandles(count = 10, startPrice = 1000, volatility = 0.02, seed = 0) {
   const candles = []
   let currentPrice = startPrice
 
+  const seededRandom = (s: number) => {
+    const x = Math.sin(s) * 10000
+    return x - Math.floor(x)
+  }
+
   for (let i = 0; i < count; i++) {
-    const change = currentPrice * volatility * (Math.random() - 0.5)
+    const randomValue = seededRandom(seed + i)
+    const change = currentPrice * volatility * (randomValue - 0.5)
     const open = currentPrice
     const close = currentPrice + change
-    const high = Math.max(open, close) + Math.random() * Math.abs(change)
-    const low = Math.min(open, close) - Math.random() * Math.abs(change)
+    const high = Math.max(open, close) + seededRandom(seed + i + 100) * Math.abs(change)
+    const low = Math.min(open, close) - seededRandom(seed + i + 200) * Math.abs(change)
 
     candles.push({ open, high, low, close })
     currentPrice = close
@@ -45,15 +51,19 @@ export async function runTestMode(gameId: string, phase: string, supabase: any) 
     const { count } = await supabase.from("players").select("*", { count: "exact", head: true }).eq("game_id", gameId)
 
     if (count !== null && count < 5) {
-      console.log("[Test Mode] Creating fake players...")
-      for (const player of TEST_PLAYERS) {
+      console.log("[v0] Test Mode: Creating fake players...")
+      for (let i = 0; i < TEST_PLAYERS.length; i++) {
+        const player = TEST_PLAYERS[i]
+        const padsBalance = 500 + i * 1000
+        const solBalance = (0.1 + i * 0.3).toFixed(2)
+
         await supabase.from("players").insert({
           game_id: gameId,
           wallet_address: player.wallet,
           nickname: player.nickname,
           team: player.team,
-          pads_balance: Math.floor(Math.random() * 5000) + 500,
-          sol_balance: (Math.random() * 2).toFixed(2),
+          pads_balance: padsBalance,
+          sol_balance: solBalance,
           status: "active",
         })
       }
@@ -65,12 +75,11 @@ export async function runTestMode(gameId: string, phase: string, supabase: any) 
     const { data: players } = await supabase.from("players").select("id, team_bet").eq("game_id", gameId)
 
     if (players) {
-      for (const player of players) {
-        if (!player.team_bet) {
-          await supabase
-            .from("players")
-            .update({ team_bet: Math.floor(Math.random() * 500) + 10 })
-            .eq("id", player.id)
+      for (let i = 0; i < players.length; i++) {
+        const player = players[i]
+        if (!player.team_bet || player.team_bet === 0) {
+          const betAmount = 100 + i * 50
+          await supabase.from("players").update({ team_bet: betAmount }).eq("id", player.id)
         }
       }
     }
@@ -84,10 +93,11 @@ export async function runTestMode(gameId: string, phase: string, supabase: any) 
     const existingPlayerIds = new Set(existingPrompts?.map((p) => p.player_id) || [])
 
     if (players) {
-      for (const player of players) {
+      for (let i = 0; i < players.length; i++) {
+        const player = players[i]
         if (!existingPlayerIds.has(player.id)) {
-          const promptText = TEST_PROMPTS[Math.floor(Math.random() * TEST_PROMPTS.length)]
-          const candles = generateMockCandles(10, 1000, 0.05) // High volatility for fun
+          const promptText = TEST_PROMPTS[i % TEST_PROMPTS.length]
+          const candles = generateMockCandles(10, 1000, 0.05, i)
 
           await supabase.from("prompts").insert({
             game_id: gameId,
@@ -108,12 +118,11 @@ export async function runTestMode(gameId: string, phase: string, supabase: any) 
     const { data: players } = await supabase.from("players").select("id, solo_bet").eq("game_id", gameId)
 
     if (players) {
-      for (const player of players) {
-        if (!player.solo_bet) {
-          await supabase
-            .from("players")
-            .update({ solo_bet: Math.floor(Math.random() * 500) + 10 })
-            .eq("id", player.id)
+      for (let i = 0; i < players.length; i++) {
+        const player = players[i]
+        if (!player.solo_bet || player.solo_bet === 0) {
+          const betAmount = 50 + i * 75
+          await supabase.from("players").update({ solo_bet: betAmount }).eq("id", player.id)
         }
       }
     }
