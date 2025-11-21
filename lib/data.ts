@@ -57,7 +57,7 @@ export const MOCK_PROMPTS: Prompt[] = [
     id: "1",
     author: "CryptoKing",
     text: "Generate a cyberpunk city with neon rain",
-    timestamp: Date.now() - 5000,
+    timestamp: 1700000000000,
     status: "processing",
     team: "blue",
   },
@@ -65,7 +65,7 @@ export const MOCK_PROMPTS: Prompt[] = [
     id: "2",
     author: "BearWhale",
     text: "Create a dystopian market crash scene",
-    timestamp: Date.now() - 15000,
+    timestamp: 1700000010000,
     status: "pending",
     team: "red",
   },
@@ -73,7 +73,7 @@ export const MOCK_PROMPTS: Prompt[] = [
     id: "3",
     author: "SatoshiN",
     text: "Design a futuristic crypto wallet interface",
-    timestamp: Date.now() - 30000,
+    timestamp: 1700000020000,
     status: "pending",
     team: "blue",
   },
@@ -81,7 +81,7 @@ export const MOCK_PROMPTS: Prompt[] = [
     id: "4",
     author: "RedRanger",
     text: "Visualize a bull run as a mechanical beast",
-    timestamp: Date.now() - 45000,
+    timestamp: 1700000030000,
     status: "completed",
     team: "red",
   },
@@ -89,7 +89,7 @@ export const MOCK_PROMPTS: Prompt[] = [
     id: "5",
     author: "DiamondHands",
     text: "Draw a diamond hand holding a rocket",
-    timestamp: Date.now() - 60000,
+    timestamp: 1700000040000,
     status: "completed",
     team: "blue",
   },
@@ -201,3 +201,23 @@ export const MOCK_PLAYERS: Player[] = [
     gameId: "game1",
   },
 ]
+
+export const CHART_DATA: CandlestickData[] = Array.from({ length: 50 }, (_, i) => {
+  const baseBlue = 1000 + Math.sin(i * 0.2) * 100 + i * 5
+  const baseRed = 1000 + Math.cos(i * 0.2) * 100 + i * 5
+  const volatility = 20
+
+  const generateCandle = (base: number): TeamCandleData => {
+    const open = base + (Math.random() - 0.5) * volatility
+    const close = base + (Math.random() - 0.5) * volatility
+    const high = Math.max(open, close) + Math.random() * volatility
+    const low = Math.min(open, close) - Math.random() * volatility
+    return { open, close, high, low }
+  }
+
+  return {
+    time: i,
+    blue: generateCandle(baseBlue),
+    red: generateCandle(baseRed),
+  }
+})

@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch" // Import Switch
-import { Clock, Zap, HelpCircle, TrendingUp, TrendingDown, Beaker } from "lucide-react" // Import Beaker icon
+import { Clock, Zap, HelpCircle, TrendingUp, TrendingDown } from "lucide-react"
 import type { GamePhase, RoundCondition } from "@/lib/data"
 
 interface TopBarProps {
@@ -8,11 +7,9 @@ interface TopBarProps {
   timeLeft: number
   theme: string
   roundCondition: RoundCondition
-  testMode: boolean // Add testMode prop
-  onToggleTestMode: (enabled: boolean) => void // Add onToggleTestMode prop
 }
 
-export function TopBar({ phase, timeLeft, theme, roundCondition, testMode, onToggleTestMode }: TopBarProps) {
+export function TopBar({ phase, timeLeft, theme, roundCondition }: TopBarProps) {
   const getPhaseLabel = (p: GamePhase) => {
     switch (p) {
       case "JOINING":
@@ -59,20 +56,9 @@ export function TopBar({ phase, timeLeft, theme, roundCondition, testMode, onTog
         </div>
       </div>
 
-      {/* Right: Round Condition & Test Mode */}
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2 border-r border-white/10 pr-6">
-          <div className="flex items-center gap-2">
-            <Beaker className={`w-4 h-4 ${testMode ? "text-green-500" : "text-gray-500"}`} />
-            <span className={`text-xs font-mono font-bold ${testMode ? "text-green-500" : "text-gray-500"}`}>
-              TEST MODE
-            </span>
-          </div>
-          <Switch checked={testMode} onCheckedChange={onToggleTestMode} className="data-[state=checked]:bg-green-500" />
-        </div>
-
+      {/* Right: Round Condition */}
+      <div className="flex items-center gap-3">
         <div className="text-right">
-          {/* Round Condition */}
           <div className="text-[10px] text-gray-500 font-mono tracking-widest mb-1">ROUND CONDITION</div>
           {isConditionHidden ? (
             <div className="flex items-center justify-end gap-2 text-gray-400 animate-pulse">

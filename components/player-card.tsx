@@ -5,16 +5,24 @@ import { Wallet, Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface PlayerCardProps {
-  player: Player | null
+  player: Player
 }
 
 export function PlayerCard({ player }: PlayerCardProps) {
-  if (!player) return null
-
   const isEliminated = player.status === "eliminated"
   const isBlue = player.team === "blue"
-  const currentBet = (Number(player.teamBet) || 0) + (Number(player.soloBet) || 0)
-  const padsBalance = Number(player.padsBalance) || 0
+
+  // Calculate current bet from teamBet and soloBet
+  const currentBet = (player.teamBet || 0) + (player.soloBet || 0)
+
+  // Use nickname or shortened wallet address
+  const displayName =
+    player.nickname ||
+    `${player.walletAddress.substring(0, 6)}...${player.walletAddress.substring(player.walletAddress.length - 4)}`
+
+  // Ensure numeric values are valid
+  const padsBalance = player.padsBalance ?? 0
+  const solBalance = player.solBalance ?? 0
 
   return (
     <Card
@@ -36,12 +44,12 @@ export function PlayerCard({ player }: PlayerCardProps) {
                 : "border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]",
             )}
           >
-            <img src={player.avatar || "/placeholder.svg"} alt={player.name} className="h-full w-full object-cover" />
+            <img src={player.avatar || "/placeholder.svg"} alt={displayName} className="h-full w-full object-cover" />
           </div>
 
           <div className="flex-1 overflow-hidden">
             <div className="flex items-center justify-between">
-              <h3 className="truncate font-bold text-white">{player.name}</h3>
+              <h3 className="truncate font-bold text-white">{displayName}</h3>
               {isEliminated && (
                 <Badge variant="destructive" className="h-5 px-1 text-[10px]">
                   OUT
@@ -53,7 +61,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
               <div className="flex items-center gap-1">
                 <Wallet className="h-3 w-3" />
                 <span className="font-mono text-white">{padsBalance.toLocaleString()} PADS</span>
-                <span className="text-[10px] text-gray-500">({player.solBalance} SOL)</span>
+                <span className="text-[10px] text-gray-500">({solBalance} SOL)</span>
               </div>
             </div>
           </div>

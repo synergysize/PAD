@@ -5,168 +5,99 @@ import { TeamSidebar } from "@/components/team-sidebar"
 import { TopBar } from "@/components/top-bar"
 import { BottomPanel } from "@/components/bottom-panel"
 import { ChartArea } from "@/components/chart-area"
-import { createClient } from "@/lib/supabase/client"
-import { AlertCircle, Loader2 } from "lucide-react"
-import { useGame, useLatestGame, useGamePlayers, useCreateGame } from "@/lib/supabase/hooks"
-import { runTestMode } from "@/lib/test-mode"
+import type { Player } from "@/lib/data"
+
+const mockPlayers: Player[] = [
+  {
+    id: "1",
+    gameId: "mock-game",
+    walletAddress: "0x1234...5678",
+    nickname: "CryptoKing",
+    team: "blue",
+    padsBalance: 1250,
+    solBalance: 0.5,
+    teamBet: 100,
+    soloBet: 50,
+    status: "active",
+    avatar: "/cyberpunk-avatar-blue.png",
+  },
+  {
+    id: "2",
+    gameId: "mock-game",
+    walletAddress: "0x8765...4321",
+    nickname: "MoonBoi",
+    team: "blue",
+    padsBalance: 980,
+    solBalance: 0.3,
+    teamBet: 150,
+    soloBet: 0,
+    status: "active",
+    avatar: "/cyberpunk-avatar-blue-2.jpg",
+  },
+  {
+    id: "3",
+    gameId: "mock-game",
+    walletAddress: "0xabcd...efgh",
+    nickname: "DiamondHands",
+    team: "red",
+    padsBalance: 1500,
+    solBalance: 0.8,
+    teamBet: 200,
+    soloBet: 100,
+    status: "active",
+    avatar: "/cyberpunk-avatar-red.jpg",
+  },
+  {
+    id: "4",
+    gameId: "mock-game",
+    walletAddress: "0xijkl...mnop",
+    nickname: "DegenDave",
+    team: "red",
+    padsBalance: 750,
+    solBalance: 0.2,
+    teamBet: 50,
+    soloBet: 25,
+    status: "active",
+    avatar: "/cyberpunk-avatar-red-2.jpg",
+  },
+]
 
 export default function Page() {
-  const supabase = createClient()
-  const [isConfigured, setIsConfigured] = useState(!!supabase)
-  const [testMode, setTestMode] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(0)
-  const [lastTestAction, setLastTestAction] = useState(0)
+  const [phase, setPhase] = useState<string>("JOINING")
+  const [roundCondition, setRoundCondition] = useState<string>("BULLISH")
+  const [theme, setTheme] = useState("What would you do if you won $1M?")
 
-  const { gameId, loading: latestGameLoading } = useLatestGame()
-  const { game, loading: gameLoading } = useGame(gameId)
-  const { players, loading: playersLoading } = useGamePlayers(gameId)
-  const { createGame, loading: createGameLoading } = useCreateGame()
-
+  // Prevent hydration mismatch
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  // Create a default game if none exists
-  useEffect(() => {
-    if (!latestGameLoading && !gameId && !createGameLoading) {
-      createGame()
-    }
-  }, [latestGameLoading, gameId, createGameLoading, createGame])
-
-  // Timer Logic
-  useEffect(() => {
-    if (!game?.phaseEndsAt) return
-
-    const interval = setInterval(() => {
-      const endsAt = new Date(game.phaseEndsAt).getTime()
-      const now = Date.now()
-      const diff = Math.max(0, Math.floor((endsAt - now) / 1000))
-      setTimeLeft(diff)
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [game?.phaseEndsAt])
-
-  useEffect(() => {
-    if (!testMode || !game || !supabase || !isMounted) return
-
-    const now = Date.now()
-    const shouldRunAction = now - lastTestAction > 3000 // Wait 3 seconds between actions
-
-    if (!shouldRunAction) return
-
-    const handleTestMode = async () => {
-      try {
-        console.log("[v0] Test mode running for phase:", game.phase)
-
-        // Run bot actions for current phase (only once per phase)
-        await runTestMode(game.id, game.phase, supabase)
-        setLastTestAction(Date.now())
-
-        // Auto-advance phase if time is up
-        if (timeLeft <= 0) {
-          const nextPhase = getNextPhase(game.phase)
-          const duration = 15 // 15 seconds for test mode
-
-          // Calculate new end time
-          const newEndsAt = new Date(Date.now() + duration * 1000).toISOString()
-
-          console.log("[v0] Advancing phase:", game.phase, "->", nextPhase)
-
-          // Update game state
-          await supabase
-            .from("games")
-            .update({
-              phase: nextPhase,
-              phase_ends_at: newEndsAt,
-              // Reveal condition in SOLO_BETTING
-              condition_revealed: nextPhase === "SOLO_BETTING" || nextPhase === "RACE" || nextPhase === "RESULTS",
-            })
-            .eq("id", game.id)
-        }
-      } catch (error) {
-        console.error("[v0] Test mode error:", error)
-      }
-    }
-
-    handleTestMode()
-  }, [testMode, game, timeLeft, supabase, isMounted, lastTestAction])
-
-  const getNextPhase = (current: string) => {
-    const phases = ["JOINING", "TEAM_BETTING", "PROMPTS", "SOLO_BETTING", "RACE", "RESULTS"]
-    const idx = phases.indexOf(current)
-    if (idx === -1 || idx === phases.length - 1) return "JOINING"
-    return phases[idx + 1]
-  }
-
   if (!isMounted) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#0a0a0a] text-white">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-          <p className="text-gray-400">Initializing neural interface...</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
-  if (!isConfigured) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#0a0a0a] text-white">
-        <div className="flex max-w-md flex-col items-center gap-4 rounded-lg border border-red-500/50 bg-red-950/10 p-8 text-center">
-          <AlertCircle className="h-12 w-12 text-red-500" />
-          <h2 className="text-2xl font-bold text-red-500">Configuration Required</h2>
-          <p className="text-gray-400">
-            Supabase environment variables are missing. Please check the "Vars" section in the sidebar and ensure
-            NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (latestGameLoading || (gameLoading && gameId)) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#0a0a0a] text-white">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
-          <p className="text-gray-400">Connecting to neural network...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const phase = game?.phase || "JOINING"
-  const roundCondition = game?.roundCondition || "BULLISH"
   const isExpanded = phase === "JOINING" || phase === "TEAM_BETTING" || phase === "RESULTS"
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#0a0a0a] font-sans text-foreground selection:bg-purple-500/30">
       {/* Left Sidebar - Team Blue */}
       <div className="w-[20%] min-w-[250px] border-r border-white/10 transition-all duration-500">
-        <TeamSidebar players={players} team="blue" className="h-full" expanded={isExpanded} />
+        <TeamSidebar players={mockPlayers} team="blue" className="h-full" expanded={isExpanded} />
       </div>
 
       {/* Center Stage */}
       <div className="flex flex-1 flex-col min-w-0">
         <div className="transition-opacity hover:opacity-80">
-          <TopBar
-            phase={phase}
-            timeLeft={timeLeft}
-            theme={game?.theme || "Loading..."}
-            roundCondition={roundCondition}
-            testMode={testMode}
-            onToggleTestMode={setTestMode}
-          />
+          <TopBar phase={phase} timeLeft={145} theme={theme} roundCondition={roundCondition} />
         </div>
-        <ChartArea gameId={game?.id} />
-        <BottomPanel phase={phase} roundCondition={roundCondition} gameId={game?.id} theme={game?.theme} />
+        <ChartArea gameId="mock-game" />
+        <BottomPanel phase={phase} roundCondition={roundCondition} gameId="mock-game" theme={theme} />
       </div>
 
       {/* Right Sidebar - Team Red */}
       <div className="w-[20%] min-w-[250px] border-l border-white/10 transition-all duration-500">
-        <TeamSidebar players={players} team="red" className="h-full" expanded={isExpanded} />
+        <TeamSidebar players={mockPlayers} team="red" className="h-full" expanded={isExpanded} />
       </div>
     </div>
   )

@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from "react"
 import { createClient } from "./client"
 import type { Game, Player, GamePhase, RoundCondition } from "@/lib/data"
 
+const supabaseUrl = "https://zdxkmfujsrriwrlbembt.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeGttZnVqc3JyaXdybGJlbWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NTA3NDcsImV4cCI6MjA3OTIyNjc0N30.gXmtd8fjK0YDflaHFA-wUXxNIoOJ6guqpbN68zHeVus";
+
 // Hook to subscribe to a specific game's state
 export function useGame(gameId: string | null) {
   const [game, setGame] = useState<Game | null>(null)

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { createChart, ColorType, CrosshairMode, type IChartApi, CandlestickSeries } from "lightweight-charts"
 import { createClient } from "@/lib/supabase/client"
-import { Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react" // Import Loader2
 
 interface ChartAreaProps {
   gameId?: string
@@ -215,7 +215,7 @@ export function ChartArea({ gameId }: ChartAreaProps) {
 
           {processingPrompt && (
             <div className="flex items-center gap-2 text-xs text-purple-400 animate-pulse">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" /> {/* Loader2 is now declared */}
               Processing: "{processingPrompt.substring(0, 30)}..."
             </div>
           )}
