@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server"
 
 const SUPABASE_URL = "https://zdxkmfujsrriwrlbembt.supabase.co"
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeGttZnVqc3JyaXdybGJlbWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxNDE5MDAsImV4cCI6MjA1MjcxNzkwMH0.MJhQlE6k4vTEQQx9jTvCDuuWDKhSWEJQQ3hDVBQWQDU"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeGttZnVqc3JyaXdybGJlbWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NTA3NDcsImV4cCI6MjA3OTIyNjc0N30.gXmtd8fjK0YDflaHFA-wUXxNIoOJ6guqpbN68zHeVus"
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({

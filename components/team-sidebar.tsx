@@ -13,7 +13,7 @@ interface TeamSidebarProps {
 
 export function TeamSidebar({ players, team, className, expanded = true }: TeamSidebarProps) {
   const teamPlayers = players.filter((p) => p.team === team)
-  const totalPads = teamPlayers.reduce((acc, p) => acc + p.padsBalance, 0)
+  const totalPads = teamPlayers.reduce((acc, p) => acc + (p.padsBalance || 0), 0)
   const activePlayers = teamPlayers.filter((p) => p.status === "active").length
 
   const teamColor = team === "blue" ? "text-blue-500" : "text-red-500"
@@ -44,7 +44,7 @@ export function TeamSidebar({ players, team, className, expanded = true }: TeamS
         </div>
         <div className="flex items-center justify-between text-xs font-mono">
           <span className="text-gray-500">TOTAL POWER</span>
-          <span className="text-white font-bold">{totalPads.toLocaleString()} PADS</span>
+          <span className="text-white font-bold">{Number(totalPads || 0).toLocaleString()} PADS</span>
         </div>
       </div>
 

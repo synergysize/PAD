@@ -18,11 +18,18 @@ export function PlayerCard({ player }: PlayerCardProps) {
   // Use nickname or shortened wallet address
   const displayName =
     player.nickname ||
-    `${player.walletAddress.substring(0, 6)}...${player.walletAddress.substring(player.walletAddress.length - 4)}`
+    (player.walletAddress
+      ? `${player.walletAddress.substring(0, 6)}...${player.walletAddress.substring(player.walletAddress.length - 4)}`
+      : "Unknown")
 
   // Ensure numeric values are valid
   const padsBalance = player.padsBalance ?? 0
   const solBalance = player.solBalance ?? 0
+
+  const safeFormat = (val: number | undefined | null) => {
+    if (val === undefined || val === null || isNaN(val)) return "0"
+    return val.toLocaleString()
+  }
 
   return (
     <Card
@@ -60,7 +67,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
             <div className="mt-1 flex items-center justify-between text-xs text-gray-400">
               <div className="flex items-center gap-1">
                 <Wallet className="h-3 w-3" />
-                <span className="font-mono text-white">{padsBalance.toLocaleString()} PADS</span>
+                <span className="font-mono text-white">{safeFormat(padsBalance)} PADS</span>
                 <span className="text-[10px] text-gray-500">({solBalance} SOL)</span>
               </div>
             </div>
@@ -71,7 +78,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
           <span className="text-xs text-gray-500">CURRENT BET</span>
           <div className={cn("flex items-center gap-1 font-mono font-bold", isBlue ? "text-blue-400" : "text-red-400")}>
             <Coins className="h-3 w-3" />
-            {currentBet.toLocaleString()} PADS
+            {safeFormat(currentBet)} PADS
           </div>
         </div>
       </CardContent>
