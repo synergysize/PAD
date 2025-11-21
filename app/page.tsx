@@ -7,10 +7,12 @@ import { BottomPanel } from "@/components/bottom-panel"
 import { ChartArea } from "@/components/chart-area"
 import type { Player } from "@/lib/data"
 
+const ACTIVE_GAME_ID = "550e8400-e29b-41d4-a716-446655440000"
+
 const mockPlayers: Player[] = [
   {
     id: "1",
-    gameId: "mock-game",
+    gameId: ACTIVE_GAME_ID,
     walletAddress: "0x1234...5678",
     nickname: "CryptoKing",
     team: "blue",
@@ -23,7 +25,7 @@ const mockPlayers: Player[] = [
   },
   {
     id: "2",
-    gameId: "mock-game",
+    gameId: ACTIVE_GAME_ID,
     walletAddress: "0x8765...4321",
     nickname: "MoonBoi",
     team: "blue",
@@ -36,7 +38,7 @@ const mockPlayers: Player[] = [
   },
   {
     id: "3",
-    gameId: "mock-game",
+    gameId: ACTIVE_GAME_ID,
     walletAddress: "0xabcd...efgh",
     nickname: "DiamondHands",
     team: "red",
@@ -49,7 +51,7 @@ const mockPlayers: Player[] = [
   },
   {
     id: "4",
-    gameId: "mock-game",
+    gameId: ACTIVE_GAME_ID,
     walletAddress: "0xijkl...mnop",
     nickname: "DegenDave",
     team: "red",
@@ -68,7 +70,6 @@ export default function Page() {
   const [roundCondition, setRoundCondition] = useState<string>("BULLISH")
   const [theme, setTheme] = useState("What would you do if you won $1M?")
 
-  // Prevent hydration mismatch
   useEffect(() => {
     setIsMounted(true)
   }, [])
@@ -81,21 +82,18 @@ export default function Page() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#0a0a0a] font-sans text-foreground selection:bg-purple-500/30">
-      {/* Left Sidebar - Team Blue */}
       <div className="w-[20%] min-w-[250px] border-r border-white/10 transition-all duration-500">
         <TeamSidebar players={mockPlayers} team="blue" className="h-full" expanded={isExpanded} />
       </div>
 
-      {/* Center Stage */}
       <div className="flex flex-1 flex-col min-w-0">
         <div className="transition-opacity hover:opacity-80">
           <TopBar phase={phase} timeLeft={145} theme={theme} roundCondition={roundCondition} />
         </div>
-        <ChartArea gameId="mock-game" />
-        <BottomPanel phase={phase} roundCondition={roundCondition} gameId="mock-game" theme={theme} />
+        <ChartArea gameId={ACTIVE_GAME_ID} />
+        <BottomPanel phase={phase} roundCondition={roundCondition} gameId={ACTIVE_GAME_ID} theme={theme} />
       </div>
 
-      {/* Right Sidebar - Team Red */}
       <div className="w-[20%] min-w-[250px] border-l border-white/10 transition-all duration-500">
         <TeamSidebar players={mockPlayers} team="red" className="h-full" expanded={isExpanded} />
       </div>
