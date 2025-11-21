@@ -1,7 +1,7 @@
 import type { Player } from "@/lib/data"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Wallet, Trophy } from "lucide-react"
+import { Wallet, Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface PlayerCardProps {
@@ -9,8 +9,8 @@ interface PlayerCardProps {
 }
 
 export function PlayerCard({ player }: PlayerCardProps) {
-  const isBlue = player.team === "blue"
   const isEliminated = player.status === "eliminated"
+  const isBlue = player.team === "blue"
 
   return (
     <Card
@@ -48,7 +48,8 @@ export function PlayerCard({ player }: PlayerCardProps) {
             <div className="mt-1 flex items-center justify-between text-xs text-gray-400">
               <div className="flex items-center gap-1">
                 <Wallet className="h-3 w-3" />
-                <span className="font-mono">{player.wallet}</span>
+                <span className="font-mono text-white">{player.padsBalance.toLocaleString()} PADS</span>
+                <span className="text-[10px] text-gray-500">({player.solBalance} SOL)</span>
               </div>
             </div>
           </div>
@@ -57,8 +58,8 @@ export function PlayerCard({ player }: PlayerCardProps) {
         <div className="mt-3 flex items-center justify-between rounded bg-black/50 px-2 py-1">
           <span className="text-xs text-gray-500">CURRENT BET</span>
           <div className={cn("flex items-center gap-1 font-mono font-bold", isBlue ? "text-blue-400" : "text-red-400")}>
-            <Trophy className="h-3 w-3" />
-            {player.bet} ETH
+            <Coins className="h-3 w-3" />
+            {player.currentBet.toLocaleString()} PADS
           </div>
         </div>
       </CardContent>

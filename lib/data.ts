@@ -1,171 +1,223 @@
-export type Team = "blue" | "red"
-
 export type PlayerStatus = "active" | "eliminated"
+
+export type RoundCondition = "BULLISH" | "BEARISH"
 
 export interface Player {
   id: string
-  name: string
-  wallet: string
-  bet: number
+  nickname: string | null
+  walletAddress: string
+  padsBalance: number
+  solBalance: number
+  teamBet: number
+  soloBet: number
   status: PlayerStatus
-  team: Team
   avatar: string
+  team: "blue" | "red"
+  gameId: string
 }
 
-export type GamePhase = "JOINING" | "BETTING" | "PROMPTS" | "SIDE_BETS" | "RACE" | "RESULTS"
+export type GamePhase = "JOINING" | "TEAM_BETTING" | "PROMPTS" | "SOLO_BETTING" | "RACE" | "RESULTS"
+
+export interface Game {
+  id: string
+  theme: string
+  phase: GamePhase
+  roundCondition: RoundCondition | null
+  conditionRevealed: boolean
+  phaseEndsAt: string | null
+  totalPot: number
+  createdAt: string
+  updatedAt: string
+}
 
 export interface Prompt {
   id: string
   author: string
-  team: Team
   text: string
   timestamp: number
   status: "pending" | "processing" | "completed"
+  team: "blue" | "red"
+}
+
+export interface TeamCandleData {
+  open: number
+  close: number
+  high: number
+  low: number
 }
 
 export interface CandlestickData {
   time: number
-  blue: { open: number; close: number; high: number; low: number }
-  red: { open: number; close: number; high: number; low: number }
+  blue: TeamCandleData
+  red: TeamCandleData
 }
 
 export const MOCK_PROMPTS: Prompt[] = [
   {
     id: "1",
     author: "CryptoKing",
-    team: "blue",
     text: "Generate a cyberpunk city with neon rain",
     timestamp: Date.now() - 5000,
     status: "processing",
+    team: "blue",
   },
   {
     id: "2",
     author: "BearWhale",
-    team: "red",
     text: "Create a dystopian market crash scene",
     timestamp: Date.now() - 15000,
     status: "pending",
+    team: "red",
   },
   {
     id: "3",
     author: "SatoshiN",
-    team: "blue",
     text: "Design a futuristic crypto wallet interface",
     timestamp: Date.now() - 30000,
     status: "pending",
+    team: "blue",
   },
   {
     id: "4",
     author: "RedRanger",
-    team: "red",
     text: "Visualize a bull run as a mechanical beast",
     timestamp: Date.now() - 45000,
     status: "completed",
+    team: "red",
   },
   {
     id: "5",
     author: "DiamondHands",
-    team: "blue",
     text: "Draw a diamond hand holding a rocket",
     timestamp: Date.now() - 60000,
     status: "completed",
+    team: "blue",
   },
 ]
 
 export const MOCK_PLAYERS: Player[] = [
   {
     id: "1",
-    name: "CryptoKing",
-    wallet: "0x71C...9A2",
-    bet: 5.2,
+    nickname: null,
+    walletAddress: "0x71C...9A2",
+    padsBalance: 1337,
+    solBalance: 0.05,
+    teamBet: 500,
+    soloBet: 0,
     status: "active",
-    team: "blue",
     avatar: "/cyberpunk-avatar-blue.png",
+    team: "blue",
+    gameId: "game1",
   },
   {
     id: "2",
-    name: "DiamondHands",
-    wallet: "0x3B2...1C4",
-    bet: 12.5,
+    nickname: null,
+    walletAddress: "0x3B2...1C4",
+    padsBalance: 2500,
+    solBalance: 1.2,
+    teamBet: 1000,
+    soloBet: 0,
     status: "active",
-    team: "blue",
     avatar: "/cyberpunk-avatar-blue-2.jpg",
+    team: "blue",
+    gameId: "game1",
   },
   {
     id: "3",
-    name: "MoonBoy",
-    wallet: "0x9A1...8B3",
-    bet: 2.1,
+    nickname: null,
+    walletAddress: "0x9A1...8B3",
+    padsBalance: 100,
+    solBalance: 0.01,
+    teamBet: 0,
+    soloBet: 0,
     status: "eliminated",
-    team: "blue",
     avatar: "/cyberpunk-avatar-blue-3.jpg",
+    team: "blue",
+    gameId: "game1",
   },
   {
     id: "4",
-    name: "SatoshiN",
-    wallet: "0x1D4...5E6",
-    bet: 8.8,
+    nickname: null,
+    walletAddress: "0x1D4...5E6",
+    padsBalance: 5000,
+    solBalance: 2.5,
+    teamBet: 1500,
+    soloBet: 0,
     status: "active",
-    team: "blue",
     avatar: "/cyberpunk-avatar-blue-4.jpg",
+    team: "blue",
+    gameId: "game1",
   },
   {
     id: "5",
-    name: "BearWhale",
-    wallet: "0x8F2...3D1",
-    bet: 15.0,
+    nickname: null,
+    walletAddress: "0x8F2...3D1",
+    padsBalance: 8000,
+    solBalance: 5.0,
+    teamBet: 2000,
+    soloBet: 0,
     status: "active",
-    team: "red",
     avatar: "/cyberpunk-avatar-red.jpg",
+    team: "red",
+    gameId: "game1",
   },
   {
     id: "6",
-    name: "RedRanger",
-    wallet: "0x4E1...9C2",
-    bet: 4.5,
+    nickname: null,
+    walletAddress: "0x4E1...9C2",
+    padsBalance: 450,
+    solBalance: 0.1,
+    teamBet: 100,
+    soloBet: 0,
     status: "active",
-    team: "red",
     avatar: "/cyberpunk-avatar-red-2.jpg",
+    team: "red",
+    gameId: "game1",
   },
   {
     id: "7",
-    name: "ShortSeller",
-    wallet: "0x2B3...7A4",
-    bet: 9.2,
+    nickname: null,
+    walletAddress: "0x2B3...7A4",
+    padsBalance: 0,
+    solBalance: 0.0,
+    teamBet: 0,
+    soloBet: 0,
     status: "eliminated",
-    team: "red",
     avatar: "/cyberpunk-avatar-red-3.jpg",
+    team: "red",
+    gameId: "game1",
   },
   {
     id: "8",
-    name: "DegenLord",
-    wallet: "0x6C5...1F8",
-    bet: 20.0,
+    nickname: null,
+    walletAddress: "0x6C5...1F8",
+    padsBalance: 3333,
+    solBalance: 1.5,
+    teamBet: 1200,
+    soloBet: 0,
     status: "active",
-    team: "red",
     avatar: "/cyberpunk-avatar-red-4.jpg",
+    team: "red",
+    gameId: "game1",
   },
 ]
 
 export const CHART_DATA: CandlestickData[] = Array.from({ length: 50 }, (_, i) => {
   const baseBlue = 1000 + Math.sin(i * 0.2) * 100 + i * 5
   const baseRed = 1000 + Math.cos(i * 0.2) * 100 + i * 5
-
   const volatility = 20
 
-  const blueOpen = baseBlue + (Math.random() - 0.5) * volatility
-  const blueClose = baseBlue + (Math.random() - 0.5) * volatility
-  const blueHigh = Math.max(blueOpen, blueClose) + Math.random() * volatility
-  const blueLow = Math.min(blueOpen, blueClose) - Math.random() * volatility
-
-  const redOpen = baseRed + (Math.random() - 0.5) * volatility
-  const redClose = baseRed + (Math.random() - 0.5) * volatility
-  const redHigh = Math.max(redOpen, redClose) + Math.random() * volatility
-  const redLow = Math.min(redOpen, redClose) - Math.random() * volatility
+  const generateCandle = (base: number): TeamCandleData => {
+    const open = base + (Math.random() - 0.5) * volatility
+    const close = base + (Math.random() - 0.5) * volatility
+    const high = Math.max(open, close) + Math.random() * volatility
+    const low = Math.min(open, close) - Math.random() * volatility
+    return { open, close, high, low }
+  }
 
   return {
     time: i,
-    blue: { open: blueOpen, close: blueClose, high: blueHigh, low: blueLow },
-    red: { open: redOpen, close: redClose, high: redHigh, low: redLow },
+    blue: generateCandle(baseBlue),
+    red: generateCandle(baseRed),
   }
 })
