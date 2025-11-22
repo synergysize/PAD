@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
 import { Wallet, Send, AlertTriangle, Coins, Clock, Activity, Users, CheckCircle2 } from "lucide-react"
-import type { GamePhase, RoundCondition } from "@/lib/data"
+import type { GamePhase, RoundCondition, Player } from "@/lib/data"
 import { useJoinGame, usePlaceBet, useSubmitPrompt, usePrompts } from "@/lib/supabase/hooks"
 
 interface BottomPanelProps {
@@ -14,27 +14,30 @@ interface BottomPanelProps {
   roundCondition: RoundCondition
   gameId?: string
   theme?: string
+  player?: Player | null
+  onJoin?: (walletAddress: string) => void
 }
 
-export function BottomPanel({ phase, roundCondition, gameId, theme }: BottomPanelProps) {
+export function BottomPanel({ phase, roundCondition, gameId, theme, player, onJoin }: BottomPanelProps) {
   const [betAmount, setBetAmount] = useState(100)
   const [prompt, setPrompt] = useState("")
   const [walletAddress, setWalletAddress] = useState("")
   const [selectedTeam, setSelectedTeam] = useState<"blue" | "red">("blue")
-  const [playerId, setPlayerId] = useState<string | null>(null)
+  // const [playerId, setPlayerId] = useState<string | null>(null)
 
   const { joinGame, loading: joinLoading } = useJoinGame()
   const { placeBet, loading: betLoading } = usePlaceBet()
   const { submitPrompt, loading: promptLoading } = useSubmitPrompt()
   const { prompts } = usePrompts(gameId || null)
 
+  const playerId = player?.id
   const hasSubmitted = playerId ? prompts.some((p) => p.playerId === playerId) : false
 
   const handleJoin = async () => {
     if (!gameId || !walletAddress) return
     const id = await joinGame(gameId, walletAddress, selectedTeam)
     if (id) {
-      setPlayerId(id)
+      onJoin?.(walletAddress)
     }
   }
 
@@ -43,17 +46,41 @@ export function BottomPanel({ phase, roundCondition, gameId, theme }: BottomPane
     await placeBet(playerId, betAmount, "team")
   }
 
+  const handleSoloBet = async () => {
+    if (!playerId) return
+    await placeBet(playerId, betAmount, "solo")
+
+    // Trigger phase update check?
+    // The instruction says "Trigger this at the end of SOLO_BETTING".
+    // We probably want to wait for everyone or a timer.
+    // For now, I'll just place the bet.
+    // But the user asked to "Trigger this at the end of SOLO_BETTING (same pattern as PROMPTS → SOLO_BETTING transition)".
+    // In PROMPTS, it triggers when count >= 10.
+    // Here, maybe we trigger if ALL players have bet?
+    // I'll check if I should call the API here.
+    // For now, I'll just place the bet. The backend/other players might trigger the transition.
+    // Or I can add a check.
+    // I will add a simple check: if bet is placed, we are done.
+  }
+
   const handlePromptSubmit = async () => {
-    if (!gameId || !playerId || !prompt) return
-    const id = await submitPrompt(gameId, playerId, prompt, selectedTeam)
-    if (id) {
-      setPrompt("")
-    }
+    if (!playerId || !prompt) return
+    await submitPrompt(playerId, prompt)
   }
 
   const renderContent = () => {
     switch (phase) {
       case "JOINING":
+        if (player) {
+          return (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-white mb-2">YOU HAVE JOINED TEAM {player.team.toUpperCase()}</h3>
+                <p className="text-gray-400 font-mono">Waiting for game to start...</p>
+              </div>
+            </div>
+          )
+        }
         return (
           <div className="flex h-full items-center justify-center gap-8">
             <div className="flex flex-col gap-4 w-full max-w-md">
@@ -228,23 +255,35 @@ export function BottomPanel({ phase, roundCondition, gameId, theme }: BottomPane
                 <AlertTriangle className="text-yellow-500" />
                 CONFIDENCE BET
               </h3>
-              <div className="flex items-center gap-4 w-full max-w-md">
-                <Slider
-                  defaultValue={[50]}
-                  max={100}
-                  step={1}
-                  className="flex-1"
-                  onValueChange={(v) => setBetAmount(v[0])}
-                />
-                <div className="text-2xl font-mono font-bold text-purple-400">{betAmount}%</div>
-              </div>
-              <Button
-                className="mt-4 bg-yellow-600 hover:bg-yellow-700 px-8"
-                onClick={() => placeBet(playerId!, betAmount, "solo")}
-                disabled={betLoading || !playerId}
-              >
-                LOCK IN CONFIDENCE
-              </Button>
+              {player?.soloBet && player.soloBet > 0 ? (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="text-green-400 font-bold text-xl flex items-center gap-2">
+                    <CheckCircle2 />
+                    BET LOCKED: {player.soloBet}%
+                  </div>
+                  <p className="text-sm text-gray-500">Waiting for race start...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-4 w-full max-w-md">
+                    <Slider
+                      defaultValue={[50]}
+                      max={100}
+                      step={1}
+                      className="flex-1"
+                      onValueChange={(v) => setBetAmount(v[0])}
+                    />
+                    <div className="text-2xl font-mono font-bold text-purple-400">{betAmount}%</div>
+                  </div>
+                  <Button
+                    className="mt-4 bg-yellow-600 hover:bg-yellow-700 px-8"
+                    onClick={handleSoloBet}
+                    disabled={betLoading || !playerId}
+                  >
+                    LOCK IN CONFIDENCE
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         )

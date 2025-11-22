@@ -5,6 +5,7 @@ import { TeamSidebar } from "@/components/team-sidebar"
 import { TopBar } from "@/components/top-bar"
 import { BottomPanel } from "@/components/bottom-panel"
 import { ChartArea } from "@/components/chart-area"
+import { useGame, usePlayer } from "@/lib/supabase/hooks"
 import type { Player } from "@/lib/data"
 
 const ACTIVE_GAME_ID = "550e8400-e29b-41d4-a716-446655440000"
@@ -66,9 +67,14 @@ const mockPlayers: Player[] = [
 
 export default function Page() {
   const [isMounted, setIsMounted] = useState(false)
-  const [phase, setPhase] = useState<string>("JOINING")
-  const [roundCondition, setRoundCondition] = useState<string>("BULLISH")
-  const [theme, setTheme] = useState("What would you do if you won $1M?")
+  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+
+  const { game } = useGame(ACTIVE_GAME_ID)
+  const { player } = usePlayer(ACTIVE_GAME_ID, walletAddress)
+
+  const phase = game?.phase || "JOINING"
+  const roundCondition = game?.roundCondition || "BULLISH"
+  const theme = game?.theme || "What would you do if you won $1M?"
 
   useEffect(() => {
     setIsMounted(true)
@@ -90,8 +96,15 @@ export default function Page() {
         <div className="transition-opacity hover:opacity-80">
           <TopBar phase={phase} timeLeft={145} theme={theme} roundCondition={roundCondition} />
         </div>
-        <ChartArea gameId={ACTIVE_GAME_ID} />
-        <BottomPanel phase={phase} roundCondition={roundCondition} gameId={ACTIVE_GAME_ID} theme={theme} />
+        <ChartArea gameId={ACTIVE_GAME_ID} phase={phase} />
+        <BottomPanel
+          phase={phase}
+          roundCondition={roundCondition}
+          gameId={ACTIVE_GAME_ID}
+          theme={theme}
+          player={player}
+          onJoin={(address) => setWalletAddress(address)}
+        />
       </div>
 
       <div className="w-[20%] min-w-[250px] border-l border-white/10 transition-all duration-500">

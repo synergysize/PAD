@@ -423,3 +423,92 @@ export function usePrompts(gameId: string | null) {
 
   return { prompts, loading, error }
 }
+
+// Hook to fetch and subscribe to a specific player
+export function usePlayer(gameId: string | null, walletAddress: string | null) {
+  const [player, setPlayer] = useState<Player | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    if (!supabase || !gameId || !walletAddress) {
+      setLoading(false)
+      return
+    }
+
+    const fetchPlayer = async () => {
+      const { data, error } = await supabase
+        .from("players")
+        .select("*")
+        .eq("game_id", gameId)
+        .eq("wallet_address", walletAddress)
+        .single()
+
+      if (error) {
+        // Don't set error if no rows found, just null player
+        if (error.code !== "PGRST116") {
+          setError(error.message)
+        }
+        setLoading(false)
+        return
+      }
+
+      if (data) {
+        setPlayer({
+          id: data.id,
+          nickname: data.nickname,
+          walletAddress: data.wallet_address,
+          padsBalance: data.pads_balance || 0,
+          solBalance: Number.parseFloat(data.sol_balance) || 0,
+          teamBet: data.team_bet || 0,
+          soloBet: data.solo_bet || 0,
+          status: data.status as "active" | "eliminated",
+          avatar: data.team === "blue" ? "/cyberpunk-avatar-blue.png" : "/cyberpunk-avatar-red.jpg",
+          team: data.team as "blue" | "red",
+          gameId: data.game_id,
+        })
+      }
+      setLoading(false)
+    }
+
+    fetchPlayer()
+
+    const channel = supabase
+      .channel(`player_${gameId}_${walletAddress}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*", // Listen to all events (INSERT, UPDATE) so we catch when the player joins
+          schema: "public",
+          table: "players",
+          filter: `game_id=eq.${gameId}`,
+        },
+        (payload) => {
+          if (payload.new && payload.new.wallet_address === walletAddress) {
+            const newPlayer = payload.new
+            setPlayer((prev) => ({
+              id: newPlayer.id,
+              nickname: newPlayer.nickname,
+              walletAddress: newPlayer.wallet_address,
+              padsBalance: newPlayer.pads_balance || 0,
+              solBalance: Number.parseFloat(newPlayer.sol_balance) || 0,
+              teamBet: newPlayer.team_bet || 0,
+              soloBet: newPlayer.solo_bet || 0,
+              status: newPlayer.status as "active" | "eliminated",
+              avatar: newPlayer.team === "blue" ? "/cyberpunk-avatar-blue.png" : "/cyberpunk-avatar-red.jpg",
+              team: newPlayer.team as "blue" | "red",
+              gameId: newPlayer.game_id,
+            }))
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [gameId, walletAddress])
+
+  return { player, loading, error }
+}
