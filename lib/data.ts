@@ -33,10 +33,12 @@ export interface Game {
 export interface Prompt {
   id: string
   author: string
+  playerId: string
   text: string
   timestamp: number
   status: "pending" | "processing" | "completed"
   team: "blue" | "red"
+  candles?: any[]
 }
 
 export interface TeamCandleData {
@@ -56,6 +58,7 @@ export const MOCK_PROMPTS: Prompt[] = [
   {
     id: "1",
     author: "CryptoKing",
+    playerId: "player1",
     text: "Generate a cyberpunk city with neon rain",
     timestamp: 1700000000000,
     status: "processing",
@@ -64,6 +67,7 @@ export const MOCK_PROMPTS: Prompt[] = [
   {
     id: "2",
     author: "BearWhale",
+    playerId: "player2",
     text: "Create a dystopian market crash scene",
     timestamp: 1700000010000,
     status: "pending",
@@ -72,6 +76,7 @@ export const MOCK_PROMPTS: Prompt[] = [
   {
     id: "3",
     author: "SatoshiN",
+    playerId: "player3",
     text: "Design a futuristic crypto wallet interface",
     timestamp: 1700000020000,
     status: "pending",
@@ -80,6 +85,7 @@ export const MOCK_PROMPTS: Prompt[] = [
   {
     id: "4",
     author: "RedRanger",
+    playerId: "player4",
     text: "Visualize a bull run as a mechanical beast",
     timestamp: 1700000030000,
     status: "completed",
@@ -88,6 +94,7 @@ export const MOCK_PROMPTS: Prompt[] = [
   {
     id: "5",
     author: "DiamondHands",
+    playerId: "player5",
     text: "Draw a diamond hand holding a rocket",
     timestamp: 1700000040000,
     status: "completed",

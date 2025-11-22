@@ -17,6 +17,7 @@ export function ChartArea({ gameId }: ChartAreaProps) {
   const [bluePrice, setBluePrice] = useState<number>(1000)
   const [redPrice, setRedPrice] = useState<number>(1000)
   const [processingPrompt, setProcessingPrompt] = useState<string | null>(null)
+  const [recentPrompts, setRecentPrompts] = useState<any[]>([])
   const supabase = createClient()
 
   useEffect(() => {
@@ -115,6 +116,8 @@ export function ChartArea({ gameId }: ChartAreaProps) {
         .order("submitted_at", { ascending: true })
 
       if (error || !prompts) return
+
+      setRecentPrompts(prompts.slice(-5).reverse())
 
       // Process Blue Team
       const bluePrompts = prompts.filter((p) => p.team === "blue")
@@ -233,6 +236,29 @@ export function ChartArea({ gameId }: ChartAreaProps) {
         </div>
 
         <div className="relative h-full w-full" ref={chartContainerRef} />
+
+        {recentPrompts.length > 0 && (
+          <div className="absolute bottom-4 right-4 z-20 w-64 bg-black/50 backdrop-blur-sm border border-white/10 rounded-lg p-3 overflow-hidden">
+            <h4 className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Recent Actions</h4>
+            <div className="flex flex-col gap-2">
+              {recentPrompts.map((p) => (
+                <div
+                  key={p.id}
+                  className="text-xs border-l-2 pl-2 py-1"
+                  style={{ borderColor: p.team === "blue" ? "#3B82F6" : "#EF4444" }}
+                >
+                  <div className="text-white/80 truncate">"{p.text}"</div>
+                  <div className="text-[10px] text-gray-500 flex justify-between">
+                    <span>{p.team === "blue" ? "Team Blue" : "Team Red"}</span>
+                    <span>
+                      {new Date(p.submitted_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

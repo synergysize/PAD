@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "./client"
-import type { Game, Player, GamePhase, RoundCondition } from "@/lib/data"
+import type { Game, Player, GamePhase, RoundCondition, Prompt } from "@/lib/data"
 
-const supabaseUrl = "https://zdxkmfujsrriwrlbembt.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeGttZnVqc3JyaXdybGJlbWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NTA3NDcsImV4cCI6MjA3OTIyNjc0N30.gXmtd8fjK0YDflaHFA-wUXxNIoOJ6guqpbN68zHeVus";
+const supabaseUrl = "https://zdxkmfujsrriwrlbembt.supabase.co"
+const supabaseAnonKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeGttZnVqc3JyaXdybGJlbWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NTA3NDcsImV4cCI6MjA3OTIyNjc0N30.gXmtd8fjK0YDflaHFA-wUXxNIoOJ6guqpbN68zHeVus"
 
 // Hook to subscribe to a specific game's state
 export function useGame(gameId: string | null) {
@@ -353,4 +354,72 @@ export function useSubmitPrompt() {
   }, [])
 
   return { submitPrompt, loading, error }
+}
+
+// Hook to fetch and subscribe to prompts
+export function usePrompts(gameId: string | null) {
+  const [prompts, setPrompts] = useState<Prompt[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    if (!supabase || !gameId) {
+      setLoading(false)
+      return
+    }
+
+    const fetchPrompts = async () => {
+      const { data, error } = await supabase
+        .from("prompts")
+        .select("*, players(nickname, wallet_address)")
+        .eq("game_id", gameId)
+        .order("submitted_at", { ascending: true })
+
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+
+      if (data) {
+        const mappedPrompts: Prompt[] = data.map((p: any) => ({
+          id: p.id,
+          author: p.players?.nickname || p.players?.wallet_address || "Unknown",
+          playerId: p.player_id,
+          text: p.text,
+          timestamp: new Date(p.submitted_at).getTime(),
+          status: p.status,
+          team: p.team,
+          candles: p.candles,
+        }))
+        setPrompts(mappedPrompts)
+      }
+      setLoading(false)
+    }
+
+    fetchPrompts()
+
+    const channel = supabase
+      .channel(`prompts_${gameId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "prompts",
+          filter: `game_id=eq.${gameId}`,
+        },
+        () => {
+          fetchPrompts()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [gameId])
+
+  return { prompts, loading, error }
 }

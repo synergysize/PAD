@@ -3,13 +3,10 @@ import { NextResponse } from "next/server"
 import { generateText } from "ai"
 import { anthropic } from "@ai-sdk/anthropic"
 
-
 export async function POST() {
   try {
-    // Initialize Supabase client with Service Role Key for admin access
-    const supabaseUrl = "https://zdxkmfujsrriwrlbembt.supabase.co";
-    const supabaseServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpkeGttZnVqc3JyaXdybGJlbWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NTA3NDcsImV4cCI6MjA3OTIyNjc0N30.gXmtd8fjK0YDflaHFA-wUXxNIoOJ6guqpbN68zHeVus";
-
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null
 
@@ -91,6 +88,30 @@ Rules:
         console.error(`Error processing prompt ${prompt.id}:`, error)
         await supabase.from("prompts").update({ status: "failed" }).eq("id", prompt.id)
         results.push({ id: prompt.id, status: "error", error: error.message })
+      }
+    }
+
+    // Get unique game IDs from processed prompts
+    const gameIds = [...new Set(prompts.map((p) => p.game_id))]
+
+    for (const gameId of gameIds) {
+      // Count completed prompts for this game
+      const { count } = await supabase
+        .from("prompts")
+        .select("*", { count: "exact", head: true })
+        .eq("game_id", gameId)
+        .eq("status", "completed")
+
+      // If we have enough prompts (e.g., 10), advance to next phase
+      if (count && count >= 10) {
+        await supabase
+          .from("games")
+          .update({
+            phase: "SOLO_BETTING",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", gameId)
+          .eq("phase", "PROMPTS") // Only update if still in PROMPTS phase
       }
     }
 

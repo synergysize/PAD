@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
-import { Wallet, Send, AlertTriangle, Coins, Clock, Activity, Users } from "lucide-react"
+import { Wallet, Send, AlertTriangle, Coins, Clock, Activity, Users, CheckCircle2 } from "lucide-react"
 import type { GamePhase, RoundCondition } from "@/lib/data"
-import { useJoinGame, usePlaceBet, useSubmitPrompt } from "@/lib/supabase/hooks"
+import { useJoinGame, usePlaceBet, useSubmitPrompt, usePrompts } from "@/lib/supabase/hooks"
 
 interface BottomPanelProps {
   phase: GamePhase
@@ -26,6 +26,9 @@ export function BottomPanel({ phase, roundCondition, gameId, theme }: BottomPane
   const { joinGame, loading: joinLoading } = useJoinGame()
   const { placeBet, loading: betLoading } = usePlaceBet()
   const { submitPrompt, loading: promptLoading } = useSubmitPrompt()
+  const { prompts } = usePrompts(gameId || null)
+
+  const hasSubmitted = playerId ? prompts.some((p) => p.playerId === playerId) : false
 
   const handleJoin = async () => {
     if (!gameId || !walletAddress) return
@@ -174,20 +177,30 @@ export function BottomPanel({ phase, roundCondition, gameId, theme }: BottomPane
                   FORMAT: <span className="text-blue-400 font-bold">{format}</span>
                 </div>
               </div>
-              <div className="flex-1 flex gap-2">
+              <div className="flex-1 flex gap-2 relative">
+                {hasSubmitted && (
+                  <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm flex items-center justify-center rounded-lg border border-green-500/20">
+                    <div className="text-center">
+                      <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                      <h3 className="text-xl font-bold text-white">Prompt Submitted</h3>
+                      <p className="text-gray-400 text-sm">Waiting for other players...</p>
+                    </div>
+                  </div>
+                )}
                 <Textarea
                   placeholder={`Write a ${format} as ${entity} to influence the market...`}
                   className="h-full bg-black/50 border-white/10 font-mono resize-none focus:border-purple-500/50"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
+                  disabled={hasSubmitted}
                 />
                 <Button
                   className="h-full w-32 bg-purple-600 hover:bg-purple-700 flex flex-col gap-2"
                   onClick={handlePromptSubmit}
-                  disabled={promptLoading || !playerId || !prompt}
+                  disabled={promptLoading || !playerId || !prompt || hasSubmitted}
                 >
                   <Send className="w-6 h-6" />
-                  <span>{promptLoading ? "SENDING..." : "SUBMIT"}</span>
+                  <span>{promptLoading ? "SENDING..." : hasSubmitted ? "SENT" : "SUBMIT"}</span>
                 </Button>
               </div>
             </div>
